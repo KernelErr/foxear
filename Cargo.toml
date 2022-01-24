@@ -1,0 +1,43 @@
+[package]
+name = "foxear"
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+authors = ["LI Rui <me@lirui.tech>"]
+readme = "README.md"
+description = "Fox Ear is a Linux process behavior trace tool powered by eBPF."
+repository = "https://github.com/KernelErr/foxear"
+keywords = ["ebpf", "tracing", "debug", "linux"]
+categories = ["development-tools"]
+
+exclude = [".*"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# eBPF related
+bcc = "0.0.32"
+libc = "0.2"
+
+# Analyse related
+
+# Storage related
+csv = "1.1"
+serde = { version = "1.0", features = ["derive"] }
+sled = "0.34"
+chrono = "0.4"
+nanoid = "0.4"
+
+# Config related
+config = { version = "0.11", features = ["toml"] }
+
+# Visualization related
+petgraph = "0.6.0"
+cli-table = { version = "0.4", features = ["csv"] }
+
+# Cli related
+clap = { version = "3.0.0", features = ["cargo"] }
+
+anyhow = "1.0"
+tokio = { version = "1.15.0", features = ["full"] }
+lockfree = "0.5"

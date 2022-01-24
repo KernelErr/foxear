@@ -1,0 +1,34 @@
+name: Rust
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install latest nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        override: true
+        components: rustfmt, clippy
+    - name: Install bcc
+      run: |
+        sudo apt-get install bpfcc-tools linux-headers-$(uname -r)
+        sudo ln -s /usr/lib/x86_64-linux-gnu/libbcc.so.0 /usr/lib/x86_64-linux-gnu/libbcc.so
+    - name: Build
+      run: |
+        ./configure
+        cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
