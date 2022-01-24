@@ -10,7 +10,7 @@ repository = "https://github.com/KernelErr/foxear"
 keywords = ["ebpf", "tracing", "debug", "linux"]
 categories = ["development-tools"]
 
-exclude = [".*"]
+include = ["/src", "/probes", "build.rs"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
