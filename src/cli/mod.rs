@@ -1,21 +1,20 @@
 pub mod check;
 
-use clap::{app_from_crate, arg, App, AppSettings, ArgMatches};
+use clap::{arg, command, ArgMatches, Command};
 
 pub struct Cli {}
 
 impl Cli {
     pub fn matches() -> ArgMatches {
-        let matches = app_from_crate!()
-            .global_setting(AppSettings::PropagateVersion)
-            .global_setting(AppSettings::UseLongFormatForHelpSubcommand)
+        let matches = command!()
+            .propagate_version(true)
             .subcommand(
-                App::new("watch")
+                Command::new("watch")
                     .about("Watch a process and log its events")
                     .arg(arg!(<PID> "PID of the process to watch")),
             )
             .subcommand(
-                App::new("check")
+                Command::new("check")
                     .about("Check previous log")
                     .arg(arg!(<Id> "Number of the directory to analyse"))
                     .arg(arg!([Command] "Command to run, empty for full list")),

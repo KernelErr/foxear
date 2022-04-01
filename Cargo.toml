@@ -1,6 +1,6 @@
 [package]
 name = "foxear"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MPL-2.0"
 authors = ["LI Rui <me@lirui.tech>"]
@@ -39,5 +39,6 @@ cli-table = { version = "0.4", features = ["csv"] }
 clap = { version = "3.0.0", features = ["cargo"] }
 
 anyhow = "1.0"
+futures = "0.3"
 tokio = { version = "1.15.0", features = ["full"] }
 lockfree = "0.5"

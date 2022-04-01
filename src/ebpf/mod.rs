@@ -6,14 +6,19 @@ pub mod utils;
 
 use crate::storage::types::*;
 use anyhow::Result;
+use futures::lock::Mutex;
 use lockfree::channel::mpsc;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::time::{sleep, Duration};
 
 type ArgvMap = HashMap<u32, String>;
 
 pub trait AbtractProbe {
-    fn load(sender: mpsc::Sender<types::EventEnum>) -> Result<()>;
+    fn load(
+        sender: mpsc::Sender<types::EventEnum>,
+        completed_probes: Arc<Mutex<i32>>,
+    ) -> Result<()>;
 }
 
 pub async fn load(storage_sender: mpsc::Sender<EventType>) -> Result<()> {
@@ -23,25 +28,36 @@ pub async fn load(storage_sender: mpsc::Sender<EventType>) -> Result<()> {
     let exec_sender = sender.clone();
     let open_sender = sender.clone();
     let tcp_sender = sender.clone();
+    let completed_probes = Arc::new(Mutex::new(0));
+    let exec_com = completed_probes.clone();
+    let open_com = exec_com.clone();
+    let tcp_com = exec_com.clone();
     tokio::spawn(async move {
-        if execsnoop::Probe::load(exec_sender).is_err() {
-            panic!("Failed to load exec eBPF");
+        if let Err(e) = execsnoop::Probe::load(exec_sender, exec_com) {
+            panic!("Failed to load ecec eBPF: {}", e);
         }
     });
     tokio::spawn(async move {
-        sleep(Duration::from_millis(1500)).await;
-        if let Err(e) = opensnoop::Probe::load(open_sender) {
+        if let Err(e) = opensnoop::Probe::load(open_sender, open_com) {
             panic!("Failed to load open eBPF: {}", e);
         }
     });
     tokio::spawn(async move {
-        sleep(Duration::from_millis(3000)).await;
-        if tcpconnect::Probe::load(tcp_sender).is_err() {
-            panic!("Failed to load exec eBPF");
+        if let Err(e) = tcpconnect::Probe::load(tcp_sender, tcp_com) {
+            panic!("Failed to load tcp eBPF: {}", e);
         }
     });
     println!("Waiting for building eBPF...");
-    sleep(Duration::from_millis(5000)).await;
+    loop {
+        let completed_guard = completed_probes.lock().await;
+        if *completed_guard == 3 {
+            drop(completed_guard);
+            break;
+        } else {
+            drop(completed_guard);
+            sleep(Duration::from_millis(5000)).await;
+        }
+    }
     println!("eBPF is ready");
     loop {
         if let Ok(message) = receiver.recv() {

@@ -4,8 +4,10 @@ use super::AbtractProbe;
 use anyhow::Result;
 use bcc::perf_event::PerfMapBuilder;
 use bcc::{Kprobe, Kretprobe, BPF};
+use futures::executor::block_on;
+use futures::lock::Mutex;
 use lockfree::channel::mpsc::Sender;
-use std::sync::Once;
+use std::sync::{Arc, Once};
 
 static mut SENDER: Option<Sender<EventEnum>> = None;
 static LOAD_INIT: Once = Once::new();
@@ -13,7 +15,7 @@ static LOAD_INIT: Once = Once::new();
 pub struct Probe {}
 
 impl AbtractProbe for Probe {
-    fn load(sender: Sender<EventEnum>) -> Result<()> {
+    fn load(sender: Sender<EventEnum>, completed_probes: Arc<Mutex<i32>>) -> Result<()> {
         LOAD_INIT.call_once(|| unsafe {
             SENDER = Some(sender);
         });
@@ -41,6 +43,11 @@ impl AbtractProbe for Probe {
 
         let mut v4_perf_map = PerfMapBuilder::new(v4_table, v4_callback).build().unwrap();
         let mut v6_perf_map = PerfMapBuilder::new(v6_table, v6_callback).build().unwrap();
+
+        let mut completed_guard = block_on(completed_probes.lock());
+        *completed_guard += 1;
+        drop(completed_guard);
+
         loop {
             v4_perf_map.poll(200);
             v6_perf_map.poll(200);

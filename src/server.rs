@@ -18,5 +18,5 @@ pub async fn start(pid: u32) {
         }
     });
 
-    let (_, _) = (load_handler.await, logger_handler.await);
+    let _ = tokio::try_join!(load_handler, logger_handler).unwrap();
 }
