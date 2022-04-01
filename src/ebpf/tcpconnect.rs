@@ -8,6 +8,7 @@ use futures::executor::block_on;
 use futures::lock::Mutex;
 use lockfree::channel::mpsc::Sender;
 use std::sync::{Arc, Once};
+use tokio::time::{sleep, Duration};
 
 static mut SENDER: Option<Sender<EventEnum>> = None;
 static LOAD_INIT: Once = Once::new();
@@ -16,6 +17,17 @@ pub struct Probe {}
 
 impl AbtractProbe for Probe {
     fn load(sender: Sender<EventEnum>, completed_probes: Arc<Mutex<i32>>) -> Result<()> {
+        loop {
+            let completed_guard = block_on(completed_probes.lock());
+            if *completed_guard == 2 {
+                drop(completed_guard);
+                break;
+            } else {
+                drop(completed_guard);
+                block_on(sleep(Duration::from_millis(1000)));
+            }
+        }
+
         LOAD_INIT.call_once(|| unsafe {
             SENDER = Some(sender);
         });
