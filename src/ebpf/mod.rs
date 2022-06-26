@@ -54,6 +54,7 @@ pub async fn load(storage_sender: mpsc::Sender<EventType>) -> Result<()> {
             drop(completed_guard);
             break;
         } else {
+            println!("{}/3 probes built", *completed_guard);
             drop(completed_guard);
             sleep(Duration::from_millis(5000)).await;
         }
